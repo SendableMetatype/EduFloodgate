@@ -1,3 +1,37 @@
+# EduFloodgate
+
+A [Floodgate](https://github.com/GeyserMC/Floodgate) fork that adds **Minecraft Education Edition** player support for online mode Java servers. Companion plugin for [EduGeyser](https://github.com/SendableMetatype/EduGeyser).
+
+## Features
+
+- **Education player identity** - Deterministic UUID generation for edu players who lack Xbox Live accounts
+- **Tenant-aware usernames** - Usernames formatted as prefix + name + 4-char tenant hash (e.g. `#john7a3f`) to distinguish players across schools
+- **FloodgatePlayer API** - `isEducationPlayer()`, `getTenantId()`, and `getAdRole()` for downstream plugins
+- **Xbox Live linking bypass** - Education clients are automatically excluded from player linking (no Xbox account to link)
+- **BedrockData protocol extension** - Education fields (isEdu, tenantId, adRole) passed through the Floodgate data pipeline
+
+## Downloads
+
+Pre-built jars are available on the [Releases](https://github.com/SendableMetatype/EduFloodgate/releases) page.
+
+Requires [EduGeyser](https://github.com/SendableMetatype/EduGeyser).
+
+## Documentation
+
+- **[Setup Guide](https://github.com/SendableMetatype/EduGeyser/blob/full/SETUP-GUIDE.md)** - How to install and configure EduGeyser + EduFloodgate
+
+## How It Works
+
+Standard Floodgate generates player UUIDs from Xbox Live XUIDs. Education Edition players have no Xbox account, so EduFloodgate uses an alternative identity scheme:
+
+1. **UUID generation**: SHA-256 hash of `tenantId:username`, with MSB set to `0x0000000100000001` to avoid collisions with both Java random UUIDs and standard Floodgate XUID-based UUIDs
+2. **Username formatting**: Configurable prefix (default `#`) + player name + 4-character hex hash of the tenant ID, keeping usernames unique across schools
+3. **Data flow**: EduGeyser extracts education fields from the client's EduTokenChain JWT during login, encodes them in the BedrockData payload, and EduFloodgate reads them during the handshake to set up the player correctly
+
+The `isFloodgateId()` check recognizes both standard (MSB `0`) and education (MSB `0x0000000100000001`) UUID formats.
+
+---
+
 # Floodgate
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
