@@ -68,12 +68,18 @@ public class HandshakeDataImpl implements HandshakeData {
         if (bedrockData != null) {
             if (bedrockData.isEducation()) {
                 String prefix = config.getEducationPrefix();
-                String tenantHash = Utils.getTenantHash(bedrockData.getTenantId());
-                // Format: #<name><4-char-hash>, truncate name if needed
-                int maxNameLength = 16 - prefix.length() - tenantHash.length();
-                int nameLength = Math.min(bedrockData.getUsername().length(), maxNameLength);
-                javaUsername = prefix + bedrockData.getUsername().substring(0, nameLength) + tenantHash;
-
+                
+                if (config.getTrustedTenants().contains(bedrockData.getTenantId())) {
+                    // Trusted tenant: clean username, no hash
+                    int nameLength = Math.min(bedrockData.getUsername().length(), 16 - prefix.length());
+                    javaUsername = prefix + bedrockData.getUsername().substring(0, nameLength);
+                } else {
+                    // Untrusted: hash suffix
+                    String tenantHash = Utils.getTenantHash(bedrockData.getTenantId());
+                    int nameLength = Math.min(bedrockData.getUsername().length(), 16 - prefix.length() - tenantHash.length());
+                    javaUsername = prefix + bedrockData.getUsername().substring(0, nameLength) + tenantHash;
+                }
+            
                 javaUniqueId = Utils.getEducationUuid(bedrockData.getTenantId(), bedrockData.getUsername());
             } else {
                 String prefix = config.getUsernamePrefix();
