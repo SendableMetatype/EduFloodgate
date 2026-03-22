@@ -12,6 +12,12 @@ username-prefix: "."
 # to distinguish players from different M365 tenants.
 education-prefix: "+"
 
+# Lets you disable suffix hash for your tenant removing annoying hash at the end of username.
+# WARNING: You have to make sure there wont be username collisions.
+trusted-tenants:
+  - "your-tenant-uuid-here"
+  - "partner-school-uuid-here"  # optional, add more if needed
+
 # Should spaces be replaced with '_' in bedrock usernames?
 replace-spaces: true
 
