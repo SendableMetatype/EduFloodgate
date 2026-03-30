@@ -69,11 +69,13 @@ public class HandshakeDataImpl implements HandshakeData {
             if (bedrockData.isEducation()) {
                 String prefix = config.getEducationPrefix();
                 if (config.isEducationHash()) {
+                    // Format: <prefix><name><4-char-hash>, truncate name if needed
                     String tenantHash = Utils.getTenantHash(bedrockData.getTenantId());
                     int maxNameLength = 16 - prefix.length() - tenantHash.length();
                     int nameLength = Math.min(bedrockData.getUsername().length(), maxNameLength);
                     javaUsername = prefix + bedrockData.getUsername().substring(0, nameLength) + tenantHash;
                 } else {
+                    // Format: <prefix><name>, truncate name if needed
                     int maxNameLength = 16 - prefix.length();
                     int nameLength = Math.min(bedrockData.getUsername().length(), maxNameLength);
                     javaUsername = prefix + bedrockData.getUsername().substring(0, nameLength);
