@@ -35,6 +35,7 @@ import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.geysermc.floodgate.api.event.skin.SkinApplyEvent;
 import org.geysermc.floodgate.api.event.skin.SkinApplyEvent.SkinData;
+import org.geysermc.floodgate.api.logger.FloodgateLogger;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.floodgate.event.EventBus;
 import org.geysermc.floodgate.event.skin.SkinApplyEventImpl;
@@ -47,18 +48,22 @@ import org.geysermc.floodgate.util.SpigotVersionSpecificMethods;
 public final class SpigotSkinApplier implements SkinApplier {
     @Inject private SpigotVersionSpecificMethods versionSpecificMethods;
     @Inject private EventBus eventBus;
+    @Inject private FloodgateLogger logger;
 
     @Override
     public void applySkin(@NonNull FloodgatePlayer floodgatePlayer, @NonNull SkinData skinData, boolean internal) {
+        logger.info("[SkinDebug] SpigotSkinApplier.applySkin called for " + floodgatePlayer.getCorrectUsername() + " internal=" + internal + " linked=" + floodgatePlayer.isLinked());
         applySkin0(floodgatePlayer, skinData, internal, true);
     }
 
     private void applySkin0(FloodgatePlayer floodgatePlayer, SkinData skinData, boolean internal, boolean firstTry) {
         Player player = Bukkit.getPlayer(floodgatePlayer.getCorrectUniqueId());
+        logger.info("[SkinDebug] SpigotSkinApplier.applySkin0 player=" + (player != null ? player.getName() : "null") + " firstTry=" + firstTry);
 
         // player is probably not logged in yet
         if (player == null) {
             if (firstTry) {
+                logger.info("[SkinDebug] Player not found, scheduling retry in 10s");
                 versionSpecificMethods.schedule(
                         () -> applySkin0(floodgatePlayer, skinData, internal, false),
                         10 * 20
@@ -82,6 +87,7 @@ public final class SpigotSkinApplier implements SkinApplier {
 
         eventBus.fire(event);
 
+        logger.info("[SkinDebug] SpigotSkinApplier event cancelled=" + event.isCancelled());
         if (event.isCancelled()) {
             return;
         }
@@ -93,6 +99,7 @@ public final class SpigotSkinApplier implements SkinApplier {
             replaceSkinOld(profile.getProperties(), event.newSkin());
         }
 
+        logger.info("[SkinDebug] SpigotSkinApplier skin replaced, doing hide+show refresh");
         versionSpecificMethods.maybeSchedule(() -> {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (!p.equals(player) && p.canSee(player)) {

@@ -34,6 +34,7 @@ import java.util.List;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.geysermc.floodgate.api.event.skin.SkinApplyEvent;
 import org.geysermc.floodgate.api.event.skin.SkinApplyEvent.SkinData;
+import org.geysermc.floodgate.api.logger.FloodgateLogger;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.floodgate.event.EventBus;
 import org.geysermc.floodgate.event.skin.SkinApplyEventImpl;
@@ -44,10 +45,12 @@ import org.geysermc.floodgate.skin.SkinDataImpl;
 public class VelocitySkinApplier implements SkinApplier {
     @Inject private ProxyServer server;
     @Inject private EventBus eventBus;
+    @Inject private FloodgateLogger logger;
 
     @Override
     public void applySkin(@NonNull FloodgatePlayer floodgatePlayer, @NonNull SkinData skinData, boolean internal) {
-        server.getPlayer(floodgatePlayer.getCorrectUniqueId()).ifPresent(player -> {
+        logger.info("[SkinDebug] applySkin called for " + floodgatePlayer.getCorrectUsername() + " internal=" + internal + " linked=" + floodgatePlayer.isLinked());
+        server.getPlayer(floodgatePlayer.getCorrectUniqueId()).ifPresentOrElse(player -> {
             List<Property> properties = new ArrayList<>(player.getGameProfileProperties());
 
             SkinData currentSkin = currentSkin(properties);
@@ -57,12 +60,16 @@ public class VelocitySkinApplier implements SkinApplier {
 
             eventBus.fire(event);
 
+            logger.info("[SkinDebug] event cancelled=" + event.isCancelled());
             if (event.isCancelled()) {
                 return;
             }
 
             replaceSkin(properties, event.newSkin());
             player.setGameProfileProperties(properties);
+            logger.info("[SkinDebug] skin applied to profile");
+        }, () -> {
+            logger.info("[SkinDebug] player not found in Velocity");
         });
     }
 

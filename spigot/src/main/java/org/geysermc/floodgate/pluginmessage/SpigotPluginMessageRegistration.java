@@ -45,13 +45,16 @@ public class SpigotPluginMessageRegistration implements PluginMessageRegistratio
                 plugin,
                 channel.getIdentifier(),
                 (channel1, player, message) -> {
+                    plugin.getLogger().info("[SkinDebug] Backend received plugin message on " + channel1 + " from " + player.getName() + " uuid=" + player.getUniqueId());
                     FloodgatePlayer fPlayer = api.getPlayer(player.getUniqueId());
+                    plugin.getLogger().info("[SkinDebug] Backend FloodgatePlayer lookup: " + (fPlayer != null ? fPlayer.getCorrectUsername() : "null"));
                     if (fPlayer == null) {
                         player.kickPlayer("Only Floodgate players can send floodgate messages!");
                         return;
                     }
 
                     Result result = channel.handleServerCall(message, fPlayer);
+                    plugin.getLogger().info("[SkinDebug] Backend handleServerCall result: allowed=" + result.isAllowed() + " reason=" + result.getReason());
                     if (!result.isAllowed() && result.getReason() != null) {
                         player.kickPlayer(result.getReason());
                     }

@@ -86,6 +86,7 @@ final class SkinUploadSocket extends WebSocketClient {
     @Override
     public void onOpen(ServerHandshake ignored) {
         setConnectionLostTimeout(11);
+        logger.info("[SkinDebug] Floodgate WebSocket connected for id=" + id);
     }
 
     @Override
@@ -109,6 +110,7 @@ final class SkinUploadSocket extends WebSocketClient {
             case SKIN_UPLOADED:
                 String xuid = message.get("xuid").getAsString();
                 FloodgatePlayer player = api.getPlayer(Utils.getJavaUuid(xuid));
+                logger.info("[SkinDebug] SKIN_UPLOADED in Floodgate, xuid=" + xuid + " player=" + (player != null ? player.getCorrectUsername() : "null"));
                 if (player != null) {
                     if (!message.get("success").getAsBoolean()) {
                         logger.info("Failed to upload skin for {} ({})", xuid,
@@ -176,9 +178,7 @@ final class SkinUploadSocket extends WebSocketClient {
         // they might however help during debugging so we'll log them when debug is enabled
         if (exception instanceof ConnectException || exception instanceof JsonSyntaxException ||
                 exception instanceof SSLException) {
-            if (logger.isDebug()) {
-                logger.error("[debug] Got an error", exception);
-            }
+            logger.error("[SkinDebug] Got a suppressed error", exception);
             return;
         }
         logger.error("Got an error", exception);

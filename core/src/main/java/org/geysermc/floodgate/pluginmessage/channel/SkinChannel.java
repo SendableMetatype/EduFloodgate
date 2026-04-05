@@ -27,11 +27,14 @@ package org.geysermc.floodgate.pluginmessage.channel;
 
 import com.google.inject.Inject;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import org.geysermc.floodgate.api.FloodgateApi;
+import org.geysermc.floodgate.api.logger.FloodgateLogger;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.floodgate.api.player.PropertyKey;
 import org.geysermc.floodgate.config.FloodgateConfig;
 import org.geysermc.floodgate.config.ProxyFloodgateConfig;
+import org.geysermc.floodgate.platform.pluginmessage.PluginMessageUtils;
 import org.geysermc.floodgate.pluginmessage.PluginMessageChannel;
 import org.geysermc.floodgate.skin.SkinApplier;
 import org.geysermc.floodgate.skin.SkinDataImpl;
@@ -40,6 +43,8 @@ public class SkinChannel implements PluginMessageChannel {
     @Inject private FloodgateApi api;
     @Inject private FloodgateConfig config;
     @Inject private SkinApplier skinApplier;
+    @Inject private FloodgateLogger logger;
+    @Inject private PluginMessageUtils pluginMessageUtils;
 
     @Override
     public String getIdentifier() {
@@ -55,10 +60,11 @@ public class SkinChannel implements PluginMessageChannel {
         // we can only get skins from Geyser (client)
         if (sourceIdentity == Identity.PLAYER) {
             Result result = handleServerCall(data, source);
-            // aka translate 'handled' into 'forward' when send-floodgate-data is enabled
+            // Explicitly send to backend instead of relying on ForwardResult,
+            // which doesn't work when Geyser uses LocalSession (JVM-direct connection)
             if (!result.isAllowed() && result.getReason() == null) {
                 if (config.isProxy() && ((ProxyFloodgateConfig) config).isSendFloodgateData()) {
-                    return Result.forward();
+                    sendToBackendWithRetry(source.getCorrectUniqueId(), data, 0);
                 }
             }
             return result;
@@ -90,5 +96,21 @@ public class SkinChannel implements PluginMessageChannel {
         skinApplier.applySkin(floodgatePlayer, skinData, false);
 
         return Result.handled();
+    }
+
+    private void sendToBackendWithRetry(UUID uuid, byte[] data, int attempt) {
+        boolean sent = pluginMessageUtils.sendMessage(uuid, true, getIdentifier(), data);
+        logger.info("[SkinDebug] sendToBackend attempt=" + attempt + " sent=" + sent + " uuid=" + uuid);
+        if (!sent && attempt < 5) {
+            Thread thread = new Thread(() -> {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignored) {
+                }
+                sendToBackendWithRetry(uuid, data, attempt + 1);
+            });
+            thread.setDaemon(true);
+            thread.start();
+        }
     }
 }

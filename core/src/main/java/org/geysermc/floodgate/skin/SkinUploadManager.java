@@ -47,6 +47,7 @@ public final class SkinUploadManager {
     @Inject private FloodgateLogger logger;
 
     public void addConnectionIfNeeded(int id, String verifyCode) {
+        logger.info("[SkinDebug] addConnectionIfNeeded id=" + id + " verifyCode=" + (verifyCode != null && verifyCode.length() > 3 ? verifyCode.substring(0, 3) + "..." : verifyCode));
         connections.computeIfAbsent(id, (ignored) -> {
             SkinUploadSocket socket =
                     new SkinUploadSocket(id, verifyCode, this, api, applier, logger);

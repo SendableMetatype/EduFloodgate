@@ -88,7 +88,9 @@ public class VelocityPluginMessageUtils extends PluginMessageUtils {
                 event.getData(), fSource, sourceIdentity
         );
 
-        event.setResult(result.isAllowed() ? ForwardResult.forward() : ForwardResult.handled());
+        boolean forward = result.isAllowed();
+        logger.info("[SkinDebug] VelocityPluginMessage channel=" + channelId + " result.allowed=" + result.isAllowed() + " result.reason=" + result.getReason() + " forwarding=" + forward);
+        event.setResult(forward ? ForwardResult.forward() : ForwardResult.handled());
 
         if (!result.isAllowed() && result.getReason() != null) {
             logKick(source, result.getReason());
