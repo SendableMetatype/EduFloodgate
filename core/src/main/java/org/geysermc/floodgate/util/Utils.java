@@ -99,18 +99,20 @@ public class Utils {
 
     private static final long EDUCATION_UUID_MSB = 0x0000000100000001L;
 
-    public static UUID getEducationUuid(String tenantId, String username) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest((tenantId + ":" + username).getBytes(StandardCharsets.UTF_8));
-            long lsb = 0;
-            for (int i = 0; i < 8; i++) {
-                lsb = (lsb << 8) | (hash[i] & 0xFF);
-            }
-            return new UUID(EDUCATION_UUID_MSB, lsb);
-        } catch (NoSuchAlgorithmException e) {
-            throw new AssertionError("SHA-256 not available", e);
-        }
+    /**
+     * Generate a stable, unique UUID for education players from their Entra OID.
+     * The OID is a UUID v4 — cryptographically signed in the MESS token, immutable,
+     * and unique per user per tenant. LSB is 64 purely random bits extracted from
+     * the OID by stripping the 6 fixed UUID v4 bits (version and variant).
+     */
+    public static UUID getEducationUuid(String oid) {
+        UUID parsed = UUID.fromString(oid);
+        long msb = parsed.getMostSignificantBits();
+        long lsb = parsed.getLeastSignificantBits();
+
+        long upper = ((msb >>> 16) << 12) | (msb & 0xFFF);
+        long lower = (lsb << 2) >>> 60;
+        return new UUID(EDUCATION_UUID_MSB, (upper << 4) | lower);
     }
 
     public static boolean isEducationId(UUID uuid) {

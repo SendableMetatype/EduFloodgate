@@ -80,7 +80,7 @@ public final class FloodgatePlayerImpl implements FloodgatePlayer {
 
         UUID javaUniqueId;
         if (data.isEducation()) {
-            javaUniqueId = Utils.getEducationUuid(data.getTenantId(), data.getUsername());
+            javaUniqueId = Utils.getEducationUuid(data.getXuid());
         } else {
             javaUniqueId = Utils.getJavaUuid(data.getXuid());
         }
