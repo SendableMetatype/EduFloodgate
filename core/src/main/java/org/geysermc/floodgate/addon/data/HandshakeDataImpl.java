@@ -66,14 +66,28 @@ public class HandshakeDataImpl implements HandshakeData {
         UUID javaUniqueId = null;
 
         if (bedrockData != null) {
-            String prefix = config.getUsernamePrefix();
-            int usernameLength = Math.min(bedrockData.getUsername().length(), 16 - prefix.length());
-            javaUsername = prefix + bedrockData.getUsername().substring(0, usernameLength);
+            if (bedrockData.isEducation()) {
+                // Education players share Bedrock usernames within a tenant (the Entra
+                // default "FirstnameLastInitial" format is not unique per-user). Build
+                // the prefixed name, then resolve any collision with other online
+                // Floodgate players by appending a "_N" suffix.
+                String prefix = config.getEducationPrefix();
+                int maxNameLength = 16 - prefix.length();
+                int nameLength = Math.min(bedrockData.getUsername().length(), maxNameLength);
+                String baseName = prefix + bedrockData.getUsername().substring(0, nameLength);
+                javaUsername = Utils.findAvailableEduUsername(baseName);
+
+                javaUniqueId = Utils.getEducationUuid(bedrockData.getXuid());
+            } else {
+                String prefix = config.getUsernamePrefix();
+                int usernameLength = Math.min(bedrockData.getUsername().length(), 16 - prefix.length());
+                javaUsername = prefix + bedrockData.getUsername().substring(0, usernameLength);
+
+                javaUniqueId = Utils.getJavaUuid(bedrockData.getXuid());
+            }
             if (config.isReplaceSpaces()) {
                 javaUsername = javaUsername.replace(" ", "_");
             }
-
-            javaUniqueId = Utils.getJavaUuid(bedrockData.getXuid());
             this.ip = bedrockData.getIp();
         }
 

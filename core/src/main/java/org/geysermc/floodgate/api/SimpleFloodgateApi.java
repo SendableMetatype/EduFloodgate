@@ -111,8 +111,13 @@ public class SimpleFloodgateApi implements FloodgateApi {
     }
 
     @Override
+    public UUID createEducationPlayerId(String oid) {
+        return Utils.getEducationUuid(oid);
+    }
+
+    @Override
     public boolean isFloodgateId(UUID uuid) {
-        return uuid.getMostSignificantBits() == 0;
+        return uuid.getMostSignificantBits() == 0 || Utils.isEducationId(uuid);
     }
 
     @Override
