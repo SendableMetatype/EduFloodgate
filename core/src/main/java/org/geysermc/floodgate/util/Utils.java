@@ -102,9 +102,12 @@ public class Utils {
 
     /**
      * Generate a stable, unique UUID for education players from their Entra OID.
-     * The OID is a UUID v4 — cryptographically signed in the MESS token, immutable,
-     * and unique per user per tenant. LSB is 64 purely random bits extracted from
-     * the OID by stripping the 6 fixed UUID v4 bits (version and variant).
+     * The OID is a UUID v4 assigned by Microsoft to an Entra account. It is
+     * cryptographically signed in the MESS token, immutable, and globally unique.
+     * A person with multiple Entra accounts has multiple OIDs, the same way a
+     * person with multiple Xbox accounts has multiple xuids. LSB is 64 purely
+     * random bits extracted from the OID by stripping the 6 fixed UUID v4 bits
+     * (version and variant).
      */
     public static UUID getEducationUuid(String oid) {
         UUID parsed = UUID.fromString(oid);
