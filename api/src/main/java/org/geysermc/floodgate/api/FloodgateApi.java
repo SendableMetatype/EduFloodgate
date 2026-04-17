@@ -84,12 +84,22 @@ public interface FloodgateApi {
     UUID createJavaPlayerId(long xuid);
 
     /**
-     * Checks if the uuid of the player has the {@link #createJavaPlayerId(long)} format. This
-     * method can't validate a linked player uuid, since that doesn't equal the format. Use
-     * {@link #isFloodgatePlayer(UUID)} if you want to include linked accounts.
+     * Create a valid Java player uuid from an Education Edition Entra OID.
+     *
+     * @param oid the Entra OID (UUID string) to convert
+     * @return the created uuid based on the given OID
+     */
+    UUID createEducationPlayerId(String oid);
+
+    /**
+     * Checks if the uuid is a Floodgate-managed uuid — either a Bedrock player's uuid in the
+     * {@link #createJavaPlayerId(long)} format, or an Education Edition player's uuid derived
+     * from their Entra OID. This method can't validate a linked player uuid, since that
+     * doesn't equal either format. Use {@link #isFloodgatePlayer(UUID)} if you want to include
+     * linked accounts.
      *
      * @param uuid the uuid to check
-     * @return true if the given uuid has the correct format.
+     * @return true if the given uuid is a Floodgate-managed uuid
      */
     boolean isFloodgateId(UUID uuid);
 

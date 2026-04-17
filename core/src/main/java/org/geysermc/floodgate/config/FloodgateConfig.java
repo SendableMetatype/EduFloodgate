@@ -56,6 +56,7 @@ public class FloodgateConfig implements GenericPostInitializeCallback<ConfigLoad
 
     private Key key;
     private String rawUsernamePrefix;
+    private String rawEducationPrefix;
 
     public boolean isProxy() {
         return this instanceof ProxyFloodgateConfig;
@@ -79,6 +80,7 @@ public class FloodgateConfig implements GenericPostInitializeCallback<ConfigLoad
         }
 
         rawUsernamePrefix = usernamePrefix;
+        rawEducationPrefix = educationPrefix;
 
         // Java usernames can't be longer than 16 chars
         if (usernamePrefix.length() >= 16) {
