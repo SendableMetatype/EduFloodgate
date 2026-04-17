@@ -8,13 +8,10 @@ key-file-name: key.pem
 # It is recommended to use a prefix that does not contain alphanumerical to avoid the possibility of duplicate usernames.
 username-prefix: "."
 
-# The prefix used for Education Edition players.
+# The prefix used for Education Edition players. When two online edu players would
+# end up with the same Java username (common within a single M365 tenant), a numeric
+# suffix is appended automatically, e.g. "+John" becomes "+John_1".
 education-prefix: "+"
-
-# Whether to append a 4-character tenant hash to education usernames.
-# This prevents name collisions between students from different M365 tenants.
-# Disable this if your server only serves a single tenant for cleaner usernames.
-education-hash: true
 
 # Should spaces be replaced with '_' in bedrock usernames?
 replace-spaces: true

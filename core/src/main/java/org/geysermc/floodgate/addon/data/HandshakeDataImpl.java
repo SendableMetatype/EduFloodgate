@@ -67,19 +67,15 @@ public class HandshakeDataImpl implements HandshakeData {
 
         if (bedrockData != null) {
             if (bedrockData.isEducation()) {
+                // Education players share Bedrock usernames within a tenant (the Entra
+                // default "FirstnameLastInitial" format is not unique per-user). Build
+                // the prefixed name, then resolve any collision with other online
+                // Floodgate players by appending a "_N" suffix.
                 String prefix = config.getEducationPrefix();
-                if (config.isEducationHash()) {
-                    // Format: <prefix><name><4-char-hash>, truncate name if needed
-                    String tenantHash = Utils.getTenantHash(bedrockData.getTenantId());
-                    int maxNameLength = 16 - prefix.length() - tenantHash.length();
-                    int nameLength = Math.min(bedrockData.getUsername().length(), maxNameLength);
-                    javaUsername = prefix + bedrockData.getUsername().substring(0, nameLength) + tenantHash;
-                } else {
-                    // Format: <prefix><name>, truncate name if needed
-                    int maxNameLength = 16 - prefix.length();
-                    int nameLength = Math.min(bedrockData.getUsername().length(), maxNameLength);
-                    javaUsername = prefix + bedrockData.getUsername().substring(0, nameLength);
-                }
+                int maxNameLength = 16 - prefix.length();
+                int nameLength = Math.min(bedrockData.getUsername().length(), maxNameLength);
+                String baseName = prefix + bedrockData.getUsername().substring(0, nameLength);
+                javaUsername = Utils.findAvailableEduUsername(baseName);
 
                 javaUniqueId = Utils.getEducationUuid(bedrockData.getXuid());
             } else {

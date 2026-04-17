@@ -42,7 +42,6 @@ public class FloodgateConfig implements GenericPostInitializeCallback<ConfigLoad
     private String keyFileName;
     private String usernamePrefix = "";
     private String educationPrefix = "+";
-    private boolean educationHash = true;
     private boolean replaceSpaces;
 
     private String defaultLocale;
@@ -86,9 +85,8 @@ public class FloodgateConfig implements GenericPostInitializeCallback<ConfigLoad
             usernamePrefix = ".";
         }
 
-        // Education prefix (+ optional 4 char hash) must leave room for at least 1 char username
-        int eduReserved = educationHash ? 4 : 0;
-        if (educationPrefix.length() + eduReserved >= 16) {
+        // Education prefix must leave room for at least 1 char of name + "_N" suffix headroom
+        if (educationPrefix.length() >= 16) {
             educationPrefix = "+";
         }
 

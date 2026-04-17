@@ -35,8 +35,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
@@ -44,6 +43,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.geysermc.floodgate.api.FloodgateApi;
+import org.geysermc.floodgate.api.player.FloodgatePlayer;
 
 public class Utils {
     private static final Pattern NON_UNIQUE_PREFIX = Pattern.compile("^\\w{0,16}$");
@@ -119,13 +120,55 @@ public class Utils {
         return uuid.getMostSignificantBits() == EDUCATION_UUID_MSB;
     }
 
-    public static String getTenantHash(String tenantId) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(tenantId.getBytes(StandardCharsets.UTF_8));
-            return String.format("%02x%02x", hash[0], hash[1]);
-        } catch (NoSuchAlgorithmException e) {
-            throw new AssertionError("SHA-256 not available", e);
+    /**
+     * Maximum Java username length as enforced by Mojang's server.
+     */
+    private static final int MAX_JAVA_USERNAME_LENGTH = 16;
+
+    /**
+     * Find an available Java username for an education player by appending a numeric
+     * {@code _N} suffix on collision with an already-online Floodgate player.
+     * <p>
+     * Education players share an Entra-derived Bedrock username within a tenant (e.g.
+     * multiple students named "JohnS"). Rather than always appending a probabilistic
+     * hash, we only add a suffix when the base name would collide, keeping single-tenant
+     * deployments' usernames clean.
+     * <p>
+     * The edu prefix (default {@code +}) is not a valid character in standard Java
+     * usernames, so we only need to check against other Floodgate players, not against
+     * arbitrary Java accounts.
+     *
+     * @param baseName the desired Java username (already prefix + truncated Bedrock name)
+     * @return {@code baseName} if unused, otherwise {@code baseName + "_" + N} for the
+     *         smallest {@code N >= 1} that is unused; {@code baseName} is truncated
+     *         further if adding the suffix would exceed 16 chars.
+     */
+    public static String findAvailableEduUsername(String baseName) {
+        FloodgateApi api = FloodgateApi.getInstance();
+        Set<String> inUse = new HashSet<>();
+        for (FloodgatePlayer p : api.getPlayers()) {
+            String name = p.getCorrectUsername();
+            if (name != null) {
+                inUse.add(name.toLowerCase(Locale.ROOT));
+            }
+        }
+
+        if (!inUse.contains(baseName.toLowerCase(Locale.ROOT))) {
+            return baseName;
+        }
+
+        int suffix = 1;
+        while (true) {
+            String suffixStr = "_" + suffix;
+            int baseMax = MAX_JAVA_USERNAME_LENGTH - suffixStr.length();
+            String base = baseName.length() > baseMax
+                    ? baseName.substring(0, baseMax)
+                    : baseName;
+            String candidate = base + suffixStr;
+            if (!inUse.contains(candidate.toLowerCase(Locale.ROOT))) {
+                return candidate;
+            }
+            suffix++;
         }
     }
 
